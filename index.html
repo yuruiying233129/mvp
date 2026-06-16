@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MVP验证助手 - 对话版</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #chat-box { border: 1px solid #ccc; height: 400px; overflow-y: auto; padding: 10px; margin-bottom: 10px; }
+        .user { background: #e0e0e0; padding: 5px; margin: 5px; border-radius: 5px; text-align: right; }
+        .assistant { background: #f0f0f0; padding: 5px; margin: 5px; border-radius: 5px; }
+        .input-area { display: flex; gap: 10px; }
+        textarea { flex: 1; height: 80px; }
+        button { padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <h1>MVP验证助手 (对话版)</h1>
+    <div id="chat-box"></div>
+    <div class="input-area">
+        <textarea id="userInput" placeholder="描述你的产品想法..."></textarea>
+        <button onclick="sendMessage()">发送</button>
+    </div>
+
+    <script>
+        // 存储整个对话历史
+        let conversation = [];
+
+        // 显示一条消息
+        function addMessage(role, content) {
+            const chatBox = document.getElementById('chat-box');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = role;
+            msgDiv.innerHTML = `<strong>${role === 'user' ? '你' : '助手'}:</strong><br>${content}`;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput').value;
+            if (!userInput.trim()) return;
+
+            // 显示用户消息
+            addMessage('user', userInput);
+            // 清空输入框
+            document.getElementById('userInput').value = '';
+
+            // 将用户消息加入对话历史
+            conversation.push({ role: 'user', content: userInput });
+
+            try {
+                const response = await fetch('http://localhost:3000/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: conversation })
+                });
+                const data = await response.json();
+                if (data.reply) {
+                    // 添加助手回复到对话历史
+                    conversation.push({ role: 'assistant', content: data.reply });
+                    addMessage('assistant', data.reply);
+                } else {
+                    addMessage('assistant', '错误: ' + (data.error || '未知错误'));
+                }
+            } catch (error) {
+                addMessage('assistant', '请求失败: ' + error.message);
+            }
+        }
+
+        // 可选：初始欢迎消息
+        window.onload = () => {
+            addMessage('assistant', '你好！我是MVP验证助手。请描述你的产品想法，我会帮你检查是否包含产品定位、目标用户和核心功能。');
+        };
+    </script>
+</body>
+</html>
