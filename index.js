@@ -141,6 +141,6 @@ app.get('/', (req, res) => {
     res.send('MVP 助手服务已启动！');
 });
 
-app.listen(port, () => {
-    console.log(`服务运行在 http://localhost:${port}`);
+app.listen(process.env.PORT || 3000, () => {
+  console.log(`服务运行在端口 ${process.env.PORT || 3000}`);
 });
